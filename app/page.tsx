@@ -11,6 +11,7 @@ export default function Home() {
   const [jobAnalysis, setJobAnalysis] = useState("");
   const [resumeOutput, setResumeOutput] = useState("");
   const [applicationOutput, setApplicationOutput] = useState("");
+  const [interviewOutput, setInterviewOutput] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -69,6 +70,26 @@ export default function Home() {
     setApplicationOutput(data.data);
     setLoading(false);
   };
+  const generateInterviewPrep = async () => {
+    setLoading(true);
+
+    const response = await fetch("/api/interview-prep", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jobOffer,
+        resume,
+      }),
+    });
+
+    const data = await response.json();
+
+    setInterviewOutput(data.data);
+
+    setLoading(false);
+  };
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-10 flex justify-center">
@@ -88,11 +109,10 @@ export default function Home() {
               <div key={step} className="flex flex-col items-center w-full">
                 <button
                   onClick={() => setCurrentStep(index)}
-                  className={`w-10 h-10 rounded-full border-4 transition-all ${
-                    currentStep === index
+                  className={`w-10 h-10 rounded-full border-4 transition-all ${currentStep === index
                       ? "bg-red-500 border-red-300"
                       : "bg-white border-gray-300"
-                  }`}
+                    }`}
                 />
                 <p className="mt-3 text-sm text-gray-300 text-center">
                   {step}
@@ -210,18 +230,29 @@ export default function Home() {
               <h2 className="text-4xl font-bold mb-2">
                 Step 4: Interview Prep
               </h2>
+
               <p className="text-gray-600 mb-8">
-                Coming soon: prepare interview questions and suggested answers
-                based on the target role.
+                Generate a personalized interview preparation package.
               </p>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                <p className="text-gray-700">
-                  This module will generate likely interview questions,
-                  suggested answers, and key points to prepare before the
-                  interview.
-                </p>
-              </div>
+              <button
+                onClick={generateInterviewPrep}
+                className="bg-black text-white px-8 py-4 rounded-2xl font-medium"
+              >
+                {loading ? "Generating..." : "Generate Interview Prep"}
+              </button>
+
+              {interviewOutput && (
+                <div className="mt-8 bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                  <h3 className="text-2xl font-bold mb-4">
+                    Interview Preparation Package
+                  </h3>
+
+                  <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-7">
+                    {interviewOutput}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
 
