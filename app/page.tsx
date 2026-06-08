@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 
+type CoachingEntry = {
+  question: string;
+  answer: string;
+  feedback: string;
+};
+
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -13,14 +19,25 @@ export default function Home() {
   const [applicationOutput, setApplicationOutput] = useState("");
   const [interviewOutput, setInterviewOutput] = useState("");
 
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [coachingHistory, setCoachingHistory] = useState<CoachingEntry[]>([]);
+  const [coachingReport, setCoachingReport] = useState("");
+  const currentQuestion = questions[currentQuestionIndex];
+
+
   const [loading, setLoading] = useState(false);
+  const [coachQuestion, setCoachQuestion] = useState("");
+  const [draftAnswer, setDraftAnswer] = useState("");
+  const [coachFeedback, setCoachFeedback] = useState("");
+
 
   const steps = [
     "Job Analysis",
     "Resume Optimizer",
     "Cover Letter & Email",
     "Interview Prep",
-    "Professional Photo",
+    "Interview Coach",
   ];
 
   const analyzeJob = async () => {
@@ -70,6 +87,7 @@ export default function Home() {
     setApplicationOutput(data.data);
     setLoading(false);
   };
+
   const generateInterviewPrep = async () => {
     setLoading(true);
 
@@ -87,9 +105,90 @@ export default function Home() {
     const data = await response.json();
 
     setInterviewOutput(data.data);
+    const extractedQuestions = extractInterviewQuestions(data.data);
+
+    setQuestions(extractedQuestions);
+    setCurrentQuestionIndex(0);
 
     setLoading(false);
   };
+
+  const extractInterviewQuestions = (text: string) => {
+    const matches = text.match(
+      /\d+\.\sQuestion:\s*([\s\S]*?)\s*Suggested Answer Framework:/g
+    );
+    if (!matches) return [];
+    return matches.map((match) => {
+      const question = match
+        .replace(/\d+\.\sQuestion:\s*/g, "")
+        .replace("Suggested Answer Framework:", "")
+        .trim();
+
+      return question;
+    });
+
+  };
+
+
+  const generateCoachFeedback = async () => {
+    setLoading(true);
+
+    const response = await fetch("/api/interview-coach", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        question: currentQuestion,
+        draftAnswer,
+        jobOffer,
+        resume,
+      }),
+    });
+
+    const data = await response.json();
+
+    setCoachFeedback(data.data);
+    setCoachingHistory((prev) => [
+      ...prev,
+      {
+        question: currentQuestion,
+        answer: draftAnswer,
+        feedback: data.data,
+      },
+    ]);
+
+
+    setLoading(false);
+  };
+  const goToNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setDraftAnswer("");
+      setCoachFeedback("");
+    }
+
+  };
+
+  const generateFinalReport = () => {
+    const report = coachingHistory
+      .map((entry, index) => {
+        return `Question ${index + 1}: ${entry.question}
+
+Your Answer:
+${entry.answer}
+
+AI Feedback:
+${entry.feedback}`;
+      })
+      .join("\n\n---\n\n");
+
+    setCoachingReport(report);
+
+
+  };
+
+
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-10 flex justify-center">
@@ -110,8 +209,8 @@ export default function Home() {
                 <button
                   onClick={() => setCurrentStep(index)}
                   className={`w-10 h-10 rounded-full border-4 transition-all ${currentStep === index
-                      ? "bg-red-500 border-red-300"
-                      : "bg-white border-gray-300"
+                    ? "bg-red-500 border-red-300"
+                    : "bg-white border-gray-300"
                     }`}
                 />
                 <p className="mt-3 text-sm text-gray-300 text-center">
@@ -224,7 +323,6 @@ export default function Home() {
               )}
             </div>
           )}
-
           {currentStep === 3 && (
             <div>
               <h2 className="text-4xl font-bold mb-2">
@@ -243,15 +341,41 @@ export default function Home() {
               </button>
 
               {interviewOutput && (
-                <div className="mt-8 bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                  <h3 className="text-2xl font-bold mb-4">
-                    Interview Preparation Package
-                  </h3>
+                <>
+                  <div className="mt-8 bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                    <h3 className="text-2xl font-bold mb-4">
+                      Interview Preparation Package
+                    </h3>
 
-                  <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-7">
-                    {interviewOutput}
-                  </pre>
-                </div>
+                    <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-7">
+                      {interviewOutput}
+                    </pre>
+                  </div>
+
+                  <div className="mt-8 border-t border-gray-200 pt-8">
+                    <h3 className="text-2xl font-bold mb-4">
+                      Ready for the next step?
+                    </h3>
+
+                    <p className="text-gray-700 leading-7 mb-6">
+                      You know what you may be asked.
+                      <br />
+                      <br />
+                      Now let&apos;s work on how you answer.
+                      <br />
+                      <br />
+                      Simulate your interview, receive AI coaching, and build stronger
+                      answers before speaking with a recruiter.
+                    </p>
+
+                    <button
+                      onClick={() => setCurrentStep(4)}
+                      className="bg-black text-white px-8 py-4 rounded-2xl font-medium"
+                    >
+                      Start Interview Coaching →
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -259,22 +383,143 @@ export default function Home() {
           {currentStep === 4 && (
             <div>
               <h2 className="text-4xl font-bold mb-2">
-                Step 5: Professional Photo
+                Step 5: Interview Coach
               </h2>
+
               <p className="text-gray-600 mb-8">
-                Coming soon: improve your professional image with
-                role-specific LinkedIn profile photo recommendations.
+                Practice your interview answers and receive AI-powered coaching.
               </p>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                <p className="text-gray-700">
-                  This module will generate professional photo recommendations
-                  and AI image prompts aligned with your target role and company
-                  tone.
-                </p>
-              </div>
+              {!coachingReport && (
+                <div className="space-y-6">
+                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                    <p className="text-sm font-medium text-gray-500 mb-2">
+                      Question {currentQuestionIndex + 1} of {questions.length}
+                    </p>
+
+                    <p className="text-xl font-semibold text-gray-900 leading-8">
+                      {currentQuestion || "Generate Interview Prep first to load your questions."}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Your Draft Answer
+                    </label>
+
+                    <textarea
+                      value={draftAnswer}
+                      onChange={(e) => setDraftAnswer(e.target.value)}
+                      placeholder="Write your answer here..."
+                      className="w-full border border-gray-300 rounded-2xl p-4 h-48"
+                    />
+                  </div>
+
+                  <button
+                    onClick={generateCoachFeedback}
+                    className="bg-black text-white px-8 py-4 rounded-2xl font-medium"
+                  >
+                    {loading ? "Analyzing..." : "Get Feedback"}
+                  </button>
+
+                  {coachFeedback && currentQuestionIndex < questions.length - 1 && (
+                    <button
+                      onClick={goToNextQuestion}
+                      className="bg-gray-100 text-gray-800 px-8 py-4 rounded-2xl font-medium border border-gray-300"
+                    >
+                      Next Question →
+                    </button>
+                  )}
+
+                  {coachFeedback && currentQuestionIndex === questions.length - 1 && (
+                    <button
+                      onClick={generateFinalReport}
+                      className="bg-green-600 text-white px-8 py-4 rounded-2xl font-medium"
+                    >
+                      Complete Coaching Session
+                    </button>
+                  )}
+
+                  {coachFeedback && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                      <h3 className="text-2xl font-bold mb-4">
+                        Coaching Feedback
+                      </h3>
+
+                      <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-7">
+                        {coachFeedback}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {coachingReport && (
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8">
+                  <h3 className="text-3xl font-bold mb-4">
+                    Interview Coaching Complete
+                  </h3>
+
+                  <p className="text-gray-700 leading-8 mb-6">
+                    Congratulations.
+                    <br />
+                    <br />
+                    You completed a full AI-powered interview simulation.
+                    <br />
+                    <br />
+                    You practiced 5 recruiter-style questions, received personalized coaching feedback, and identified areas to improve before your real interview.
+                    <br />
+                    <br />
+                    Good luck with your recruiting process.
+                  </p>
+
+                  <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                    <p className="font-medium text-lg">
+                      CareerOS Insight
+                    </p>
+
+                    <p className="text-gray-600 mt-4 leading-7">
+                      Recruiters want to understand how you think, how you work, and the value you can create.
+                      <br />
+                      <br />
+                      Your interview is an opportunity to demonstrate how you solve problems and the impact you can create.
+                      <br />
+                      <br />
+                      What sets great candidates apart is not only their experience.
+                      <br />
+                      <br />
+                      It is how effectively they communicate the value they can bring.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
+          <div className="flex justify-between mt-10 pt-8 border-t border-gray-200">
+            <button
+              onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 0))}
+              disabled={currentStep === 0}
+              className={`px-6 py-3 rounded-2xl font-medium transition-all ${currentStep === 0
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                }`}
+            >
+              Previous
+            </button>
+
+            <button
+              onClick={() =>
+                setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
+              }
+              disabled={currentStep === steps.length - 1}
+              className={`px-6 py-3 rounded-2xl font-medium transition-all ${currentStep === steps.length - 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-black text-white hover:bg-gray-800"
+                }`}
+            >
+              Next
+            </button>
+          </div>
         </section>
       </div>
     </main>
