@@ -13,6 +13,7 @@ export default function Home() {
 
   const [jobOffer, setJobOffer] = useState("");
   const [resume, setResume] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   const [jobAnalysis, setJobAnalysis] = useState("");
   const [resumeOutput, setResumeOutput] = useState("");
@@ -55,6 +56,28 @@ export default function Home() {
     setJobAnalysis(data.data);
     setLoading(false);
   };
+
+  const uploadResume = async () => {
+    if (!resumeFile) return;
+
+    const formData = new FormData();
+
+    formData.append("file", resumeFile);
+
+    const response = await fetch("/api/upload-resume", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (data.success && data.text) {
+  setResume(data.text);
+}
+
+    console.log(data);
+  };
+
+
 
   const optimizeResume = async () => {
     setLoading(true);
@@ -266,6 +289,43 @@ ${entry.feedback}`;
                 Paste your resume so CareerOS can suggest improvements without
                 inventing experience.
               </p>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Upload Resume (DOCX)
+                </label>
+
+                <input
+                  type="file"
+                  accept=".docx"
+                  className="block w-full"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+
+                    if (file) {
+                      setResumeFile(file);
+                    }
+                  }}
+                />
+
+                {resumeFile && (
+                  <p className="text-sm text-green-600 mt-2">
+                    Selected file: {resumeFile.name}
+                  </p>
+                )}
+
+                {resumeFile && (
+                  <button
+                    onClick={uploadResume}
+                    className="mt-3 bg-black text-white px-5 py-3 rounded-xl font-medium"
+                  >
+                    Extract Resume Text
+                  </button>
+                )}
+
+
+
+              </div>
 
               <textarea
                 className="w-full h-56 p-6 rounded-2xl border border-gray-300 text-lg resize-none mb-6 focus:outline-none focus:ring-2 focus:ring-red-400"
