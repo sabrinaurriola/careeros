@@ -32,6 +32,9 @@ export default function Home() {
   const [draftAnswer, setDraftAnswer] = useState("");
   const [coachFeedback, setCoachFeedback] = useState("");
 
+  const [sessionToast, setSessionToast] = useState("");
+  const [sessionRecordId, setSessionRecordId] = useState("");
+
 
   const steps = [
     "Job Analysis",
@@ -39,6 +42,14 @@ export default function Home() {
     "Cover Letter & Email",
     "Interview Prep",
     "Interview Coach",
+  ];
+
+  const nextStepLabels = [
+    "Resume Optimizer →",
+    "Cover Letter & Email →",
+    "Interview Prep →",
+    "Interview Coach →",
+    "Finish →",
   ];
 
   const analyzeJob = async () => {
@@ -71,13 +82,38 @@ export default function Home() {
 
     const data = await response.json();
     if (data.success && data.text) {
-  setResume(data.text);
-}
+      setResume(data.text);
+    }
 
     console.log(data);
   };
 
+  const saveSession = async () => {
+    console.log("Saving session payload:", {
+      sessionId: "will be generated",
+      appVersion: "V5.2",
+      jobOffer,
+      resumeText: resume,
+      sessionStatus: "Resume Uploaded",
+      source: resumeFile ? "DOCX Upload" : "Manual Text",
+    });
+    const response = await fetch("/api/save-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sessionId: `career-${Date.now()}`,
+        appVersion: "V5.2",
+        jobOffer,
+        resumeText: resume,
+        sessionStatus: "Resume Optimized",
+        source: resumeFile ? "DOCX Upload" : "Manual Text",
+      }),
+    });
 
+    return await response.json();
+  };
 
   const optimizeResume = async () => {
     setLoading(true);
@@ -92,6 +128,16 @@ export default function Home() {
 
     const data = await response.json();
     setResumeOutput(data.data);
+    const sessionData = await saveSession();
+
+    console.log("Session saved:", sessionData);
+    setSessionRecordId(sessionData.recordId);
+
+    const shortSessionId = sessionData.recordId.slice(0, 8);
+
+    setSessionToast(
+      `✅ Career session #${shortSessionId} saved\n\nYour progress has been stored and is available in Session History.`
+    );
     setLoading(false);
   };
 
@@ -245,6 +291,7 @@ ${entry.feedback}`;
         </section>
 
         <section className="bg-white text-black rounded-3xl p-10 shadow-xl">
+
           {currentStep === 0 && (
             <div>
               <h2 className="text-4xl font-bold mb-2">
@@ -349,6 +396,16 @@ ${entry.feedback}`;
                   <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-7">
                     {resumeOutput}
                   </pre>
+
+                  {sessionToast && (
+                    <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 p-4">
+                      <p className="whitespace-pre-line text-green-800">
+                        {sessionToast}
+                      </p>
+                    </div>
+                  )}
+
+
                 </div>
               )}
             </div>
@@ -567,18 +624,16 @@ ${entry.feedback}`;
               Previous
             </button>
 
-            <button
-              onClick={() =>
-                setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
-              }
-              disabled={currentStep === steps.length - 1}
-              className={`px-6 py-3 rounded-2xl font-medium transition-all ${currentStep === steps.length - 1
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-black text-white hover:bg-gray-800"
-                }`}
-            >
-              Next
-            </button>
+            {currentStep < 3 && (
+              <button
+                onClick={() =>
+                  setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1))
+                }
+                className="px-6 py-3 rounded-2xl font-medium transition-all bg-black text-white hover:bg-gray-800"
+              >
+                {nextStepLabels[currentStep]}
+              </button>
+            )}
           </div>
         </section>
       </div>

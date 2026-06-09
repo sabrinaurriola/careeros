@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "airtable": "^0.12.2",
     "mammoth": "^1.12.0",
     "next": "16.2.6",
     "pdfjs-dist": "^6.0.227",
