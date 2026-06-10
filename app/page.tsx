@@ -16,6 +16,9 @@ export default function Home() {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
 
   const [jobAnalysis, setJobAnalysis] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+
   const [resumeOutput, setResumeOutput] = useState("");
   const [applicationOutput, setApplicationOutput] = useState("");
   const [interviewOutput, setInterviewOutput] = useState("");
@@ -34,6 +37,34 @@ export default function Home() {
 
   const [sessionToast, setSessionToast] = useState("");
   const [sessionRecordId, setSessionRecordId] = useState("");
+
+  const startNewSession = () => {
+    setCurrentStep(0);
+
+    setJobOffer("");
+    setResume("");
+    setResumeFile(null);
+
+    setJobAnalysis("");
+    setResumeOutput("");
+    setApplicationOutput("");
+    setInterviewOutput("");
+
+    setQuestions([]);
+    setCurrentQuestionIndex(0);
+    setCoachingHistory([]);
+    setCoachingReport("");
+
+    setCoachQuestion("");
+    setDraftAnswer("");
+    setCoachFeedback("");
+
+    setSessionToast("");
+    setSessionRecordId("");
+
+    setCompanyName("");
+    setJobTitle("");
+  };
 
 
   const steps = [
@@ -65,7 +96,26 @@ export default function Home() {
 
     const data = await response.json();
     setJobAnalysis(data.data);
+    const identity = extractSessionIdentity(data.data);
+
+    setCompanyName(identity.companyName);
+    setJobTitle(identity.jobTitle);
+
+    console.log("Company:", identity.companyName);
+    console.log("Job Title:", identity.jobTitle);
+
+
     setLoading(false);
+  };
+
+  const extractSessionIdentity = (analysisText: string) => {
+    const companyMatch = analysisText.match(/Company Name:\s*(.*)/i);
+    const titleMatch = analysisText.match(/Job Title:\s*(.*)/i);
+
+    return {
+      companyName: companyMatch?.[1]?.trim() || "Unknown",
+      jobTitle: titleMatch?.[1]?.trim() || "Unknown",
+    };
   };
 
   const uploadResume = async () => {
@@ -91,12 +141,15 @@ export default function Home() {
   const saveSession = async () => {
     console.log("Saving session payload:", {
       sessionId: "will be generated",
-      appVersion: "V5.2",
+      appVersion: "V5.3",
       jobOffer,
       resumeText: resume,
-      sessionStatus: "Resume Uploaded",
+      companyName,
+      jobTitle,
+      sessionStatus: "Resume Optimized",
       source: resumeFile ? "DOCX Upload" : "Manual Text",
     });
+
     const response = await fetch("/api/save-session", {
       method: "POST",
       headers: {
@@ -104,9 +157,12 @@ export default function Home() {
       },
       body: JSON.stringify({
         sessionId: `career-${Date.now()}`,
-        appVersion: "V5.2",
+        appVersion: "V5.3",
         jobOffer,
         resumeText: resume,
+        jobAnalysis,
+        companyName,
+        jobTitle,
         sessionStatus: "Resume Optimized",
         source: resumeFile ? "DOCX Upload" : "Manual Text",
       }),
@@ -114,7 +170,6 @@ export default function Home() {
 
     return await response.json();
   };
-
   const optimizeResume = async () => {
     setLoading(true);
 
@@ -154,6 +209,21 @@ export default function Home() {
 
     const data = await response.json();
     setApplicationOutput(data.data);
+    await fetch("/api/update-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        recordId: sessionRecordId,
+        fields: {
+          "Session Status": "Cover Letter Generated",
+          "Application Output": data.data,
+        },
+      }),
+    });
+
+
     setLoading(false);
   };
 
@@ -174,6 +244,19 @@ export default function Home() {
     const data = await response.json();
 
     setInterviewOutput(data.data);
+    await fetch("/api/update-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        recordId: sessionRecordId,
+        fields: {
+          "Session Status": "Interview Prep Generated",
+          "Interview Prep Output": data.data,
+        },
+      }),
+    });
     const extractedQuestions = extractInterviewQuestions(data.data);
 
     setQuestions(extractedQuestions);
@@ -239,7 +322,7 @@ export default function Home() {
 
   };
 
-  const generateFinalReport = () => {
+  const generateFinalReport = async () => {
     const report = coachingHistory
       .map((entry, index) => {
         return `Question ${index + 1}: ${entry.question}
@@ -253,6 +336,19 @@ ${entry.feedback}`;
       .join("\n\n---\n\n");
 
     setCoachingReport(report);
+    await fetch("/api/update-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        recordId: sessionRecordId,
+        fields: {
+          "Session Status": "Coaching Completed",
+          "Coaching History": report,
+        },
+      }),
+    });
 
 
   };
@@ -574,39 +670,40 @@ ${entry.feedback}`;
               {coachingReport && (
                 <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8">
                   <h3 className="text-3xl font-bold mb-4">
-                    Interview Coaching Complete
+                    🎉 Session Completed
                   </h3>
 
+                  <div className="mb-6 text-gray-700 leading-8">
+                    <p>
+                      <strong>Company:</strong> {companyName || "Unknown"}
+                    </p>
+                    <p>
+                      <strong>Role:</strong> {jobTitle || "Unknown"}
+                    </p>
+                  </div>
+
                   <p className="text-gray-700 leading-8 mb-6">
-                    Congratulations.
-                    <br />
-                    <br />
-                    You completed a full AI-powered interview simulation.
-                    <br />
-                    <br />
-                    You practiced 5 recruiter-style questions, received personalized coaching feedback, and identified areas to improve before your real interview.
-                    <br />
-                    <br />
-                    Good luck with your recruiting process.
+                    Your application workflow has been completed and saved.
                   </p>
 
-                  <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                    <p className="font-medium text-lg">
-                      CareerOS Insight
-                    </p>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() =>
+                        alert(
+                          "Session History is currently under development and will be available in a future CareerOS version."
+                        )
+                      }
+                      className="bg-gray-100 text-gray-800 px-6 py-3 rounded-2xl font-medium hover:bg-gray-200"
+                    >
+                      View Session History
+                    </button>
 
-                    <p className="text-gray-600 mt-4 leading-7">
-                      Recruiters want to understand how you think, how you work, and the value you can create.
-                      <br />
-                      <br />
-                      Your interview is an opportunity to demonstrate how you solve problems and the impact you can create.
-                      <br />
-                      <br />
-                      What sets great candidates apart is not only their experience.
-                      <br />
-                      <br />
-                      It is how effectively they communicate the value they can bring.
-                    </p>
+                    <button
+                      onClick={startNewSession}
+                      className="bg-black text-white px-6 py-3 rounded-2xl font-medium hover:bg-gray-800"
+                    >
+                      Start New Session
+                    </button>
                   </div>
                 </div>
               )}

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const { jobOffer, resume } = body;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash-lite",
     });
 
     const prompt = `
@@ -26,7 +26,34 @@ IMPORTANT RULES:
 - Use only the information provided.
 - If something is missing, identify it as a preparation gap.
 - Keep the output practical and concise.
-- Respond only in English.
+
+LANGUAGE RULE — CRITICAL:
+
+Detect the language of the job offer before writing the answer.
+
+You must write the entire response in the same language as the job offer.
+
+If the job offer is in French, write everything in French.
+If the job offer is in English, write everything in English.
+If the job offer is in Spanish, write everything in Spanish.
+
+Do not mix languages.
+
+IMPORTANT TECHNICAL RULE:
+
+The application extracts interview questions automatically.
+
+Therefore, you MUST keep the following labels EXACTLY in English:
+
+Question:
+Suggested Answer Framework:
+Context:
+Action:
+Result:
+
+Do NOT translate these labels.
+
+Everything else must be written in the same language as the job offer.
 
 JOB OFFER:
 ${jobOffer}
@@ -39,52 +66,96 @@ Return EXACTLY this structure:
 ## Interview Preparation Package
 
 ### 1. Interview Match Summary
+
 Briefly explain how prepared the candidate appears for this role.
 
 ### 2. Top 5 Likely Interview Questions
 
 1. Question:
+[write the question in the job offer language]
+
 Suggested Answer Framework:
 - Context:
 - Action:
 - Result:
 
 2. Question:
+[write the question in the job offer language]
+
 Suggested Answer Framework:
 - Context:
 - Action:
 - Result:
 
 3. Question:
+[write the question in the job offer language]
+
 Suggested Answer Framework:
 - Context:
 - Action:
 - Result:
 
 4. Question:
+[write the question in the job offer language]
+
 Suggested Answer Framework:
 - Context:
 - Action:
 - Result:
 
 5. Question:
+[write the question in the job offer language]
+
 Suggested Answer Framework:
 - Context:
 - Action:
 - Result:
 
 ### 3. Potential Weaknesses
+
 - weakness 1
 - weakness 2
 - weakness 3
 
 ### 4. Questions To Ask The Recruiter
+
 - question 1
 - question 2
 - question 3
 
 ### 5. 30-Second Elevator Pitch
+
 Write one concise pitch the candidate can use at the start of the interview.
+
+CRITICAL OUTPUT LANGUAGE RULE:
+
+The detected job offer language is the ONLY allowed output language.
+
+If the job offer is in French:
+- Interview Match Summary must be in French.
+- Interview questions must be in French.
+- Potential Weaknesses must be in French.
+- Questions To Ask The Recruiter must be in French.
+- Elevator Pitch must be in French.
+
+If the job offer is in English:
+- Interview Match Summary must be in English.
+- Interview questions must be in English.
+- Potential Weaknesses must be in English.
+- Questions To Ask The Recruiter must be in English.
+- Elevator Pitch must be in English.
+
+Keep ONLY these labels in English:
+
+Question:
+Suggested Answer Framework:
+Context:
+Action:
+Result:
+
+Do not add extra sections.
+Do not add explanations outside the template.
+
 `;
 
     const result = await model.generateContent(prompt);
@@ -105,66 +176,66 @@ Write one concise pitch the candidate can use at the start of the interview.
       data: `
 DEMO MODE — Gemini quota unavailable.
 
-## Interview Preparation Package
+## Dossier de Préparation à l'Entretien
 
-### 1. Interview Match Summary
-The candidate appears to be a promising junior profile for an Automation / AI Ops role, especially if they clearly explain their practical project work, workflow logic, and motivation to build automation systems.
+### 1. Résumé de la Correspondance avec l'Entretien
+Clara présente un profil solide pour ce poste, avec une expérience en ingénierie, gestion de projet, optimisation des processus et transition vers l'IA et l'automatisation.
 
-### 2. Top 5 Likely Interview Questions
+### 2. 5 Questions Probables à l'Entretien
 
 1. Question:
-Can you explain a workflow automation project you have built or are currently building?
+Parlez-moi de votre projet CareerOS. Quel a été votre rôle et quelles technologies clés avez-vous utilisées ?
 
 Suggested Answer Framework:
-- Context: Explain the manual process or problem.
-- Action: Describe the tools, logic, and steps you used.
-- Result: Explain what the system improved or what it is designed to improve.
+- Context: Présenter brièvement le problème que CareerOS vise à résoudre.
+- Action: Expliquer votre contribution au produit, à l'architecture, aux workflows IA et à l'amélioration de l'expérience utilisateur.
+- Result: Montrer que le projet est un MVP fonctionnel en amélioration continue.
 
 2. Question:
-How would you identify a process that should be automated?
+Comment votre expérience en optimisation de processus industriels vous aide-t-elle à concevoir des solutions IA utiles pour les équipes métiers ?
 
 Suggested Answer Framework:
-- Context: Mention repetitive, time-consuming, or error-prone tasks.
-- Action: Explain how you would map the process and define inputs, decisions, and outputs.
-- Result: Show how automation can save time, reduce errors, or improve consistency.
+- Context: Rappeler votre expérience en amélioration continue, KPI et performance opérationnelle.
+- Action: Expliquer comment vous transformez un problème métier en workflow structuré.
+- Result: Montrer votre capacité à livrer des solutions mesurables et orientées impact.
 
 3. Question:
-Tell me about a technical problem you faced while building CareerOS.
+Comment comptez-vous renforcer rapidement vos compétences techniques en Python, JavaScript, APIs et automatisation ?
 
 Suggested Answer Framework:
-- Context: Mention API integration, environment variables, routing, or quota errors.
-- Action: Explain how you debugged the issue step by step.
-- Result: Show that you kept the system working using fallback logic.
+- Context: Reconnaître les compétences déjà acquises et les axes de progression.
+- Action: Mentionner votre formation actuelle, vos projets CareerOS et vos pratiques de build.
+- Result: Montrer votre capacité d'apprentissage rapide et votre orientation exécution.
 
 4. Question:
-Why are you interested in automation and AI Ops?
+Comment collaborez-vous avec des équipes commerciales, produit ou opérationnelles pour comprendre leurs besoins ?
 
 Suggested Answer Framework:
-- Context: Explain your interest in improving workflows and reducing manual work.
-- Action: Connect your learning path to real project building.
-- Result: Show that you want to build useful systems, not just use AI tools.
+- Context: Expliquer vos expériences de collaboration avec des équipes transverses.
+- Action: Décrire votre méthode pour clarifier les besoins, prioriser et transformer les attentes en solutions.
+- Result: Montrer votre capacité à faire le lien entre métier et technique.
 
 5. Question:
-How do you make sure AI-generated outputs remain trustworthy?
+Comment évaluez-vous la qualité d'une solution générée ou assistée par l'IA ?
 
 Suggested Answer Framework:
-- Context: Explain that AI can produce incomplete or inaccurate answers.
-- Action: Mention constraints, structured prompts, review steps, and rules such as never inventing experience.
-- Result: Show that you combine automation with human validation.
+- Context: Expliquer votre approche rigoureuse issue de l'ingénierie et de l'analyse de données.
+- Action: Décrire vos critères de validation : cohérence, exactitude, utilité métier, limites et risques.
+- Result: Montrer que vous savez utiliser l'IA sans perdre le contrôle qualité.
 
-### 3. Potential Weaknesses
-- Limited production experience with deployed automation systems.
-- Missing measurable project impact metrics.
-- Gemini API quota limitations may prevent live AI output during demos.
+### 3. Faiblesses Potentielles
+- Niveau technique encore en développement sur certains langages.
+- Besoin de consolider l'expérience directe sur des projets IA en production.
+- Nécessité de démontrer une montée en compétence rapide sur les outils attendus.
 
-### 4. Questions To Ask The Recruiter
-- What manual processes are currently slowing down the team?
-- Which tools are already used for automation, CRM, or reporting?
-- How would success be measured in this role during the first three months?
+### 4. Questions à Poser au Recruteur
+- Quels types de projets IA l'équipe priorise-t-elle actuellement ?
+- Comment mesurez-vous l'impact des solutions d'automatisation déployées ?
+- Quel accompagnement est prévu pour accélérer la montée en compétence technique ?
 
-### 5. 30-Second Elevator Pitch
-I am a junior Automation and AI Ops builder focused on creating practical workflow systems that combine AI, APIs, and structured logic. Through projects like CareerOS, I am learning to design tools that analyze information, reduce manual work, and support better decision-making. I am especially interested in roles where I can keep building real systems and improve operational efficiency.
-      `,
+### 5. Pitch d'Ascenseur de 30 Secondes
+Je suis Clara, ingénieure en transition vers l'Automation et l'AI Ops, avec une forte expérience en optimisation de processus, gestion de projet et analyse de données. Je construis actuellement CareerOS, un produit IA orienté candidature, pour démontrer ma capacité à transformer un besoin utilisateur en système fonctionnel, structuré et mesurable.
+`,
     });
 
   }

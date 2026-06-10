@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const { question, draftAnswer, jobOffer, resume } = body;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash-lite",
     });
 
     const prompt = `
@@ -25,7 +25,26 @@ IMPORTANT RULES:
 - Never add fake achievements.
 - Use only the job offer, resume, question, and draft answer provided.
 - Be direct, practical, and supportive.
-- Respond only in English.
+
+LANGUAGE RULE — CRITICAL:
+
+Detect the language of the job offer before writing the answer.
+
+You must write the entire response in the same language as the job offer.
+
+If the job offer is in French, write everything in French.
+If the job offer is in English, write everything in English.
+If the job offer is in Spanish, write everything in Spanish.
+
+This includes:
+- section titles
+- explanations
+- strengths
+- improvement suggestions
+- coaching tips
+- best answer
+
+Do not mix languages.
 
 JOB OFFER:
 ${jobOffer}
@@ -39,7 +58,7 @@ ${question}
 CANDIDATE DRAFT ANSWER:
 ${draftAnswer}
 
-Return EXACTLY this structure:
+Use this exact numbering structure, but translate all section titles into the language of the job offer.
 
 ## Interview Coaching Feedback
 
@@ -63,6 +82,27 @@ Give a score from 1 to 10.
 
 ### 5. Best Answer
 Rewrite an improved answer based only on the candidate's real background and the provided resume.
+
+CRITICAL OUTPUT LANGUAGE RULE:
+
+The detected job offer language is the ONLY allowed output language.
+
+If the job offer is in French:
+- All section titles must be in French.
+- All explanations must be in French.
+- All coaching recommendations must be in French.
+- The best answer must be in French.
+
+If the job offer is in English:
+- All section titles must be in English.
+- All explanations must be in English.
+- All coaching recommendations must be in English.
+- The best answer must be in English.
+
+Before finalizing, review your answer and rewrite any sentence that is not in the language of the job offer.
+
+Do not add extra sections.
+Do not add explanations outside the template.
 `;
 
     const result = await model.generateContent(prompt);
@@ -83,32 +123,39 @@ Rewrite an improved answer based only on the candidate's real background and the
       data: `
 DEMO MODE — Gemini quota unavailable.
 
-## Interview Coaching Feedback
+## Retour de Coaching d'Entretien
 
-### 1. Score
-7/10
+### 1. Note
 
-### 2. Strengths
-- The answer shows motivation and interest in automation.
-- It connects the candidate's learning path with practical project work.
-- It mentions CareerOS as a relevant example.
+8/10
 
-### 3. Areas To Improve
-- Add more structure using Context → Action → Result.
-- Mention specific tools such as Next.js, APIs, or workflow logic.
-- Include a concrete result or learning outcome.
+### 2. Points Forts
 
-### 4. Coaching Tips
-- Start by explaining the problem you were solving.
-- Clearly describe your role and actions.
-- End with the impact, result, or what you learned.
+- La candidate explique clairement l'objectif principal du projet CareerOS.
+- La réponse met en avant des technologies pertinentes comme Gemini, Next.js et Airtable.
+- Le projet démontre une initiative personnelle et une capacité à construire un produit de bout en bout.
 
-### 5. Best Answer
-One project I have been building is CareerOS, an AI-powered career copilot designed to support job seekers through the application process. The problem I wanted to solve was that candidates often spend a lot of time analyzing job offers, adapting their resume, writing cover letters, and preparing interviews manually.
+### 3. Axes d'Amélioration
 
-To build it, I used Next.js, TypeScript, Tailwind CSS, API routes, and Gemini API. I structured the application as a guided workflow with modules for job analysis, resume optimization, cover letter generation, interview preparation, and interview coaching. I also implemented fallback handling so the app remains usable even when the AI provider has quota limitations.
+- Décrire plus précisément votre rôle personnel dans la conception et le développement du projet.
+- Expliquer les principaux défis rencontrés et la manière dont ils ont été résolus.
+- Mettre davantage en avant l'impact métier ou la valeur apportée aux utilisateurs.
 
-This project helped me understand how to design AI workflows, connect frontend and backend logic, structure prompts, handle API errors, and think like an Automation / AI Ops builder.
+### 4. Conseils de Coaching
+
+- Structurez votre réponse selon le format Contexte → Action → Résultat.
+- Soulignez les décisions produit et techniques que vous avez prises vous-même.
+- Quantifiez les résultats ou les fonctionnalités livrées lorsque cela est possible.
+
+### 5. Meilleure Réponse
+
+CareerOS est un projet personnel que je développe dans le cadre de ma transition vers l'Automation et l'AI Ops. L'objectif est d'aider les candidats à optimiser leur processus de candidature grâce à l'intelligence artificielle.
+
+J'ai conçu l'architecture du produit et développé les principales fonctionnalités, notamment l'analyse d'offres d'emploi, l'optimisation de CV, la génération de lettres de motivation et la préparation aux entretiens. Le projet utilise Next.js pour l'interface utilisateur, Gemini pour les analyses et recommandations basées sur l'IA, ainsi qu'Airtable pour le suivi des sessions et des données.
+
+L'un des principaux défis a été de concevoir un workflow cohérent reliant plusieurs étapes du parcours candidat tout en garantissant la traçabilité des résultats. Pour y répondre, j'ai mis en place un système de suivi de session et une architecture modulaire facilitant les évolutions du produit.
+
+Aujourd'hui, CareerOS est un MVP fonctionnel qui me permet de démontrer des compétences en product building, automatisation, intégration d'IA et conception de workflows orientés utilisateur.
       `,
     });
 

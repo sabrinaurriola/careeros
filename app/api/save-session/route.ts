@@ -14,6 +14,9 @@ export async function POST(request: Request) {
         appVersion,
         jobOffer,
         resumeText,
+        jobAnalysis,
+        companyName,
+        jobTitle,
         sessionStatus,
         source,
     } = body;
@@ -27,11 +30,11 @@ export async function POST(request: Request) {
             { status: 400 }
         );
     }
-console.log("AIRTABLE_BASE_ID:", process.env.AIRTABLE_BASE_ID);
-console.log(
-  "AIRTABLE_API_KEY starts with:",
-  process.env.AIRTABLE_API_KEY?.substring(0, 8)
-);
+    console.log("AIRTABLE_BASE_ID:", process.env.AIRTABLE_BASE_ID);
+    console.log(
+        "AIRTABLE_API_KEY starts with:",
+        process.env.AIRTABLE_API_KEY?.substring(0, 8)
+    );
     const createdRecord = await table.create([
         {
             fields: {
@@ -39,6 +42,9 @@ console.log(
                 "App Version": appVersion,
                 "Job Offer": jobOffer,
                 "Resume Text": resumeText,
+                "Job Analysis": jobAnalysis,
+                "Company Name": companyName,
+                "Job Title": jobTitle,
                 "Session Status": sessionStatus,
                 Source: source,
             },

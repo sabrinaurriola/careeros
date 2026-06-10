@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     const { jobOffer, resume } = body;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash-lite",
     });
 
     const prompt = `
@@ -24,7 +24,23 @@ IMPORTANT RULES:
 - Never add fake skills, fake companies, fake degrees, or fake achievements.
 - Only improve wording, positioning, structure, and relevance.
 - If something is missing, clearly label it as a gap.
-- Respond only in English.
+
+LANGUAGE RULE — CRITICAL:
+Detect the language of the job offer before writing the answer.
+
+You must write the entire response in the same language as the job offer.
+
+If the job offer is in French, write everything in French.
+If the job offer is in English, write everything in English.
+If the job offer is in Spanish, write everything in Spanish.
+
+This includes:
+- all section titles
+- all explanations
+- all bullet points
+- all recommendations
+
+Do not mix languages.
 
 Analyze:
 
@@ -34,7 +50,7 @@ ${jobOffer}
 CURRENT RESUME:
 ${resume}
 
-Return EXACTLY this structure:
+Use this exact numbering structure, but translate all section titles into the language of the job offer.
 
 ## Resume Optimization
 
@@ -64,6 +80,24 @@ Write a short professional summary tailored to the role.
 
 ### 7. Integrity Check
 Confirm that no experience was invented.
+
+CRITICAL OUTPUT LANGUAGE RULE:
+The detected job offer language is the ONLY allowed output language.
+
+If the job offer is in French:
+- All section titles must be in French.
+- All explanations must be in French.
+- All bullet points must be in French.
+
+If the job offer is in English:
+- All section titles must be in English.
+- All explanations must be in English.
+- All bullet points must be in English.
+
+Before finalizing, review your answer and rewrite any sentence that is not in the language of the job offer.
+
+Do not add extra sections.
+Do not add explanations outside the template.
 `;
 
     const result = await model.generateContent(prompt);
@@ -82,40 +116,39 @@ Confirm that no experience was invented.
       data: `
 DEMO MODE — Gemini quota unavailable.
 
-## Resume Optimization
+Le langage de l'offre d'emploi est le français. La réponse sera donc entièrement en français.
 
-### 1. Resume Match Summary
-The profile shows strong potential for an Automation / AI Ops role, especially if it highlights workflow automation, AI tools, data handling, and process improvement.
+## Optimisation du CV
 
-### 2. Strong Matches
-- Interest in automation and AI workflows
-- Ability to structure processes and tools
-- Portfolio project experience with CareerOS
+### 1. Résumé de la Correspondance du CV
+Le CV présente une base solide pour le poste de Junior AI Builder, avec une expérience significative en gestion de projet, analyse de données, et une transition claire vers l'automatisation et l'IA. Les compétences acquises en formation renforcent cette orientation. Cependant, l'expérience directe dans le développement de solutions IA pour des clients Fortune 500 et la maîtrise approfondie de certains langages et technologies clés mentionnés dans l'offre manquent.
 
-### 3. Missing Keywords
-- API integration
-- Airtable
-- Make
-- Workflow automation
-- Process optimization
-- Prompt engineering
+### 2. Correspondances Fortes
+- Expérience en gestion de projets transverses et internationaux avec un focus sur la traduction des besoins métiers en spécifications techniques.
+- Solide background en analyse de données et optimisation des processus, avec une approche scientifique et axée sur les résultats (Lean Six Sigma).
+- Volonté démontrée de se former et d'acquérir de nouvelles compétences en IA et automatisation, avec des projets personnels en cours.
 
-### 4. Suggested Improvements
-- Add a technical skills section focused on automation tools.
-- Reframe project experience using measurable outcomes.
-- Highlight AI workflow logic and structured problem solving.
+### 3. Mots-clés Manquants
+- Développement de solutions agentiques pour les entreprises du Fortune 500.
+- Maîtrise de React, TypeScript, GraphQL, Apex.
+- Expérience avec des outils IA de pointe tels que Cursor, Claude, ou des plateformes similaires pour le développement accéléré.
 
-### 5. Stronger Bullet Points
-- Built CareerOS, an AI-powered career copilot using Next.js, TypeScript, Tailwind CSS, and Gemini API.
-- Designed a job analysis workflow that transforms job descriptions into structured career insights.
-- Implemented API routes, environment variables, and fallback handling for AI service limitations.
-- Created a modern SaaS-style interface to guide users through the job application process.
+### 4. Améliorations Suggérées
+- Mettre davantage en avant les compétences et projets liés à l'IA générative et aux LLMs, même s'ils sont encore en phase d'acquisition ou développés dans le cadre de formations.
+- Souligner la capacité à travailler en équipe multidisciplinaire, un point clé du poste.
+- Adapter le résumé professionnel pour refléter directement l'ambition de devenir un "AI Builder" dans un contexte de conseil et de déploiement de solutions concrètes.
 
-### 6. Optimized Professional Summary
-Junior Automation / AI Ops builder developing practical AI-powered workflow systems with Next.js, APIs, and structured prompt engineering. Focused on building tools that improve productivity, reduce manual work, and support better decision-making.
+### 5. Points Forts Rédigés
+- **Responsable Développement Produits & Procédés Internationaux**
+    - Cadrage, déploiement et mise à l'échelle (scale-up) de nouveaux produits à l'échelle globale, en traduisant les besoins métiers complexes en spécifications techniques claires pour l'industrialisation.
+    - Centralisation, nettoyage et analyse approfondie des données de production de filiales internationales pour suivre les KPIs et optimiser les rendements, générant une amélioration de 10% du rendement global via l'évaluation de nouveaux procédés industriels.
+    - Analyse des écarts de coûts de fabrication et proposition de reformulations stratégiques pour réduire les coûts tout en maintenant la fonctionnalité des produits, démontrant une approche axée sur la valeur stratégique.
 
-### 7. Integrity Check
-No experience was invented. Suggestions are based on existing project work and can be adapted to the user's real background.
+### 6. Résumé Professionnel Optimisé
+Ingénieure chevronnée avec près de 10 ans d'expérience internationale en optimisation des processus industriels et pilotage de la performance. Actuellement en transition stratégique vers l'Automation et l'AI Ops, je développe des compétences en IA générative et LLMs. Je suis passionnée par la création de solutions concrètes et j'aspire à intégrer une équipe multidisciplinaire pour concevoir, développer et déployer des agents IA performants au sein d'entreprises majeures, en mettant à profit ma rigueur d'ingénieur et mon approche orientée résultats.
+
+### 7. Vérification d'Intégrité
+Aucune expérience n'a été inventée. Les améliorations sont basées sur l'expérience existante et les formations en cours de Sabrina Abc.
       `,
     });
   }
