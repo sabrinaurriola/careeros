@@ -1,5 +1,13 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 📄 Project Case Study
+
+This repository includes a comprehensive project case study covering the business problem, product vision, system architecture, AI features, technical decisions, user experience, implementation process, key outcomes, and lessons learned.
+
+Read the full write-up here: [CareerOS Case Study](case-study/CareerOS_Case_Study.pdf)
+
+We encourage you to review the case study for a complete walkthrough of the project.
+
 ## Getting Started
 
 First, run the development server:
